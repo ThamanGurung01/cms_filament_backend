@@ -20,8 +20,8 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
             [
-                'name' => 'Test User',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'name' => 'Admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('admin@gmail.com'),
             ]
         );
     }

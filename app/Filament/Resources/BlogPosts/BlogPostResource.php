@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BlogPosts;
 use App\Filament\Resources\BlogPosts\Pages\CreateBlogPost;
 use App\Filament\Resources\BlogPosts\Pages\EditBlogPost;
 use App\Filament\Resources\BlogPosts\Pages\ListBlogPosts;
+use App\Models\BlogCategory;
 use App\Models\BlogPost;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -49,7 +50,38 @@ class BlogPostResource extends Resource
                         ->schema([
                             TextInput::make('title')->required(),
                             TextInput::make('slug')->required()->unique(ignoreRecord: true),
-                            Select::make('blog_category_id')->relationship('category', 'name')->required(),
+                            Select::make('blog_category_id')
+                                ->relationship('category', 'name')
+                                ->required()
+                                ->searchable()
+                                ->preload()
+                                ->createOptionForm([
+                                    TextInput::make('name')->required(),
+                                    TextInput::make('slug')->required()
+                                        ->unique('blog_categories', 'slug'),
+                                ])
+                                ->editOptionForm([
+                                    TextInput::make('name')->required(),
+                                    TextInput::make('slug')->required()
+                                        ->unique('blog_categories', 'slug', ignoreRecord: true),
+                                ])
+                                ->suffixAction(
+                                    Action::make('deleteCategory')
+                                        ->icon('heroicon-o-trash')
+                                        ->color('danger')
+                                        ->tooltip('Delete selected category')
+                                        ->requiresConfirmation()
+                                        ->modalHeading('Delete Category')
+                                        ->modalDescription('Are you sure? This will permanently delete this category and cannot be undone.')
+                                        ->modalSubmitActionLabel('Yes, delete it')
+                                        ->visible(fn ($state): bool => filled($state))
+                                        ->action(function ($state, $set) {
+                                            if ($state) {
+                                                BlogCategory::find($state)?->delete();
+                                                $set('blog_category_id', null);
+                                            }
+                                        })
+                                ),
                             DatePicker::make('published_at'),
                             Select::make('status')
                                 ->options([

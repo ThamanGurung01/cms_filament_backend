@@ -35,7 +35,8 @@ class SiteSettings extends Page implements HasForms
      */
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        $user = auth()->user();
+        return $user?->isSuperAdmin() || $user?->isAdmin();
     }
 
     public function getMaxContentWidth(): \Filament\Support\Enums\Width|string|null
@@ -52,6 +53,7 @@ class SiteSettings extends Page implements HasForms
     public ?string $site_whatsapp = '';
     public ?string $site_copyright = '';
     public mixed $site_logo = null;
+    public mixed $site_dark_logo = null;
     public mixed $site_favicon = null;
     public ?string $site_primary_color = '#0668a7';
     public ?string $site_author_name = '';
@@ -94,6 +96,9 @@ class SiteSettings extends Page implements HasForms
 
     public ?string $spotlight_cta_label         = '';
 
+    public ?string $robots_txt_content = '';
+    public ?string $sitemap_xml_content = '';
+
     public function mount(): void
     {
         $settings = Setting::map();
@@ -107,6 +112,7 @@ class SiteSettings extends Page implements HasForms
             'site_whatsapp'   => $settings['site_whatsapp'] ?? '',
             'site_copyright'  => $settings['site_copyright'] ?? '',
             'site_logo'       => !empty($settings['site_logo']) ? [$settings['site_logo'] => $settings['site_logo']] : null,
+            'site_dark_logo'  => !empty($settings['site_dark_logo']) ? [$settings['site_dark_logo'] => $settings['site_dark_logo']] : null,
             'site_favicon'    => !empty($settings['site_favicon']) ? [$settings['site_favicon'] => $settings['site_favicon']] : null,
             'site_primary_color' => $settings['site_primary_color'] ?? '#0668a7',
             'site_author_name' => $settings['site_author_name'] ?? '',
@@ -139,6 +145,9 @@ class SiteSettings extends Page implements HasForms
             'social_tiktok'     => $settings['social_tiktok'] ?? '',
             'inject_header' => $settings['inject_header'] ?? '',
             'inject_footer' => $settings['inject_footer'] ?? '',
+
+            'robots_txt_content' => file_exists(public_path('robots.txt')) ? file_get_contents(public_path('robots.txt')) : '',
+            'sitemap_xml_content' => file_exists(public_path('sitemap.xml')) ? file_get_contents(public_path('sitemap.xml')) : '',
         ]);
     }
 
@@ -164,8 +173,13 @@ class SiteSettings extends Page implements HasForms
                                         ->image()
                                         ->disk('public')
                                         ->directory('site')
-                                        ->helperText('Replaces the default logo across the site. Recommended height: 40–60px.')
-                                        ->columnSpanFull(),
+                                        ->helperText('Replaces the default logo across the site. Recommended height: 40–60px.'),
+                                    FileUpload::make('site_dark_logo')
+                                        ->label('Site Logo (Dark Mode)')
+                                        ->image()
+                                        ->disk('public')
+                                        ->directory('site')
+                                        ->helperText('Alternative logo for dark backgrounds. Recommended height: 40–60px.'),
                                     FileUpload::make('site_favicon')
                                         ->label('Favicon')
                                         ->image()
@@ -254,6 +268,15 @@ class SiteSettings extends Page implements HasForms
                                             '_blank' => 'New Tab',
                                         ])->default('_self'),
                                 ])->columns(2),
+                            Section::make('Custom Header Code')
+                                ->description('Injected just before the closing </head> tag on every page.')
+                                ->schema([
+                                    Textarea::make('inject_header')
+                                        ->label('')
+                                        ->rows(10)
+                                        ->extraAttributes(['class' => 'font-mono text-xs', 'spellcheck' => 'false'])
+                                        ->columnSpanFull(),
+                                ]),
                         ]),
 
                     Tab::make('Footer Layout')
@@ -291,7 +314,16 @@ class SiteSettings extends Page implements HasForms
                                         ->label('Bottom Right Menu')
                                         ->options(fn() => \App\Models\Menu::pluck('name', 'id'))
                                         ->searchable(),
+                                    Section::make('Custom Footer Code')
+                                ->description('Injected just before the closing </body> tag on every page.')
+                                ->schema([
+                                    Textarea::make('inject_footer')
+                                        ->label('')
+                                        ->rows(10)
+                                        ->extraAttributes(['class' => 'font-mono text-xs', 'spellcheck' => 'false'])
+                                        ->columnSpanFull(),
                                 ]),
+                        ]),
                         ]),
 
                     Tab::make('Global SEO')
@@ -370,31 +402,26 @@ class SiteSettings extends Page implements HasForms
                                 ]),
                         ]),
 
-                    Tab::make('Insert into Header')
-                        ->icon('heroicon-o-code-bracket')
+                    Tab::make('Robots & Sitemap')
+                        ->icon('heroicon-o-document-text')
                         ->schema([
-                            Section::make('Custom Header Code')
-                                ->description('Injected just before the closing </head> tag on every page. Useful for analytics scripts, custom fonts, tracking pixels, or CSS overrides.')
+                            Section::make('robots.txt')
+                                ->description('Edit your site\'s robots.txt file to instruct search engine crawlers.')
                                 ->schema([
-                                    Textarea::make('inject_header')
+                                    Textarea::make('robots_txt_content')
                                         ->label('')
-                                        ->rows(16)
-                                        ->placeholder("<!-- Example: Google Analytics -->\n<script async src=\"https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX\"></script>\n<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag('js', new Date());\n  gtag('config', 'G-XXXXXXX');\n</script>")
+                                        ->rows(10)
+                                        ->placeholder("User-agent: *\nDisallow:")
                                         ->extraAttributes(['class' => 'font-mono text-xs', 'spellcheck' => 'false'])
                                         ->columnSpanFull(),
                                 ]),
-                        ]),
-
-                    Tab::make('Insert into Footer')
-                        ->icon('heroicon-o-code-bracket-square')
-                        ->schema([
-                            Section::make('Custom Footer Code')
-                                ->description('Injected just before the closing </body> tag on every page. Useful for chat widgets, conversion scripts, or deferred JS.')
+                            Section::make('sitemap.xml')
+                                ->description('Edit your site\'s sitemap.xml file.')
                                 ->schema([
-                                    Textarea::make('inject_footer')
+                                    Textarea::make('sitemap_xml_content')
                                         ->label('')
-                                        ->rows(16)
-                                        ->placeholder("<!-- Example: Hotjar -->\n<script>\n  (function(h,o,t,j,a,r){\n    h.hj=h.hj||function(){...};\n  })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');\n</script>")
+                                        ->rows(15)
+                                        ->placeholder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n</urlset>")
                                         ->extraAttributes(['class' => 'font-mono text-xs', 'spellcheck' => 'false'])
                                         ->columnSpanFull(),
                                 ]),
@@ -409,11 +436,23 @@ class SiteSettings extends Page implements HasForms
         $data = $this->form->getState();
 
         foreach ($data as $key => $value) {
+            if (in_array($key, ['robots_txt_content', 'sitemap_xml_content'])) {
+                continue;
+            }
+
             // FileUpload fields return arrays; persist only the first path
-            if (in_array($key, ['seo_og_image', 'site_logo', 'site_favicon', 'site_author_avatar']) && is_array($value)) {
+            if (in_array($key, ['seo_og_image', 'site_logo', 'site_dark_logo', 'site_favicon', 'site_author_avatar']) && is_array($value)) {
                 $value = count($value) > 0 ? array_values($value)[0] : '';
             }
             Setting::set($key, $value ?? '');
+        }
+
+        // Write physical files
+        if (isset($data['robots_txt_content'])) {
+            file_put_contents(public_path('robots.txt'), $data['robots_txt_content']);
+        }
+        if (isset($data['sitemap_xml_content'])) {
+            file_put_contents(public_path('sitemap.xml'), $data['sitemap_xml_content']);
         }
 
         // Flush the aggregated cache so views pick up fresh data

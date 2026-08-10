@@ -54,7 +54,7 @@ class RedirectResource extends Resource
                         Toggle::make('is_active')
                             ->required()
                             ->default(true),
-                    ]),
+                    ])->columnSpanFull(),
             ]);
     }
 

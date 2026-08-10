@@ -35,7 +35,8 @@ class HomepageSettings extends Page implements HasForms
      */
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        $user = auth()->user();
+        return $user?->isSuperAdmin() || $user?->isAdmin();
     }
 
     public function getMaxContentWidth(): \Filament\Support\Enums\Width|string|null

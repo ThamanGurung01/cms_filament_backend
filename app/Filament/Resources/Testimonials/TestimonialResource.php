@@ -23,14 +23,17 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\IconColumn;
+use UnitEnum;
 
 class TestimonialResource extends Resource
 {
     protected static ?string $model = Testimonial::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-star';
 
     protected static ?string $recordTitleAttribute = 'client_name';
+    
+    protected static string|UnitEnum|null $navigationGroup = 'Site Content';
 
     public static function form(Schema $schema): Schema
     {

@@ -15,14 +15,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::firstOrCreate(
+            ['email' => 'superadmin@gmail.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'role' => User::ROLE_SUPERADMIN,
+            ]
+        );
 
         User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin',
-                'password' => \Illuminate\Support\Facades\Hash::make('admin@gmail.com'),
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'role' => User::ROLE_ADMIN,
             ]
         );
+
+        $this->call(DummyDataSeeder::class);
     }
 }

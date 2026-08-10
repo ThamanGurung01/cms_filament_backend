@@ -33,13 +33,7 @@ class UserResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    /**
-     * Only superadmins can access User Management.
-     */
-    public static function canAccess(): bool
-    {
-        return auth()->user()?->isSuperAdmin() ?? false;
-    }
+
 
     public static function form(Schema $schema): Schema
     {
@@ -113,7 +107,7 @@ class UserResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                ]),
+                ])->visible(auth()->user()->isSuperadmin()),
             ]);
     }
 

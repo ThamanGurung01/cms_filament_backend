@@ -30,6 +30,11 @@ class BlogCategoryResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Blog';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema

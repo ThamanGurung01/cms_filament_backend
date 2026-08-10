@@ -42,7 +42,8 @@ class ActivityLogResource extends Resource
      */
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        $user = auth()->user();
+        return $user?->isSuperAdmin() || $user?->isAdmin();
     }
 
     /**

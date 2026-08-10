@@ -19,34 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('services')) {
-                \Illuminate\Support\Facades\View::share(
-                    'footerServices',
-                    \App\Models\Service::where('is_active', true)->orderBy('sort_order')->take(5)->get()
-                );
-            } else {
-                \Illuminate\Support\Facades\View::share('footerServices', collect());
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\View::share('footerServices', collect());
-        }
-
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('service_categories')) {
-                $megaMenuCategories = \App\Models\ServiceCategory::where('is_active', true)
-                    ->with(['services' => function ($query) {
-                        $query->where('is_active', true)->orderBy('sort_order');
-                    }])
-                    ->orderBy('sort_order')
-                    ->get();
-                \Illuminate\Support\Facades\View::share('megaMenuCategories', $megaMenuCategories);
-            } else {
-                \Illuminate\Support\Facades\View::share('megaMenuCategories', collect());
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\View::share('megaMenuCategories', collect());
-        }
+        \Illuminate\Support\Facades\View::share('footerServices', collect());
+        \Illuminate\Support\Facades\View::share('megaMenuCategories', collect());
 
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
